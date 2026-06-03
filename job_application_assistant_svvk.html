@@ -1,0 +1,361 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.app { display: flex; flex-direction: column; min-height: 600px; }
+.tabs { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); gap: 0; }
+.tab { padding: 10px 18px; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--color-text-secondary); background: none; border-top: none; border-left: none; border-right: none; transition: all 0.15s; }
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+.tab:hover:not(.active) { color: var(--color-text-primary); background: var(--color-background-secondary); }
+.panel { display: none; padding: 1.25rem 0; }
+.panel.active { display: block; }
+label { font-size: 13px; color: var(--color-text-secondary); display: block; margin-bottom: 5px; }
+textarea, input, select { width: 100%; font-family: var(--font-sans); font-size: 14px; }
+textarea { resize: vertical; min-height: 80px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.field { margin-bottom: 12px; }
+.btn-primary { background: var(--color-text-primary); color: var(--color-background-primary); border: none; padding: 9px 20px; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.output-box { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 1rem 1.25rem; margin-top: 1rem; font-size: 14px; line-height: 1.7; color: var(--color-text-primary); white-space: pre-wrap; min-height: 80px; }
+.output-box.empty { color: var(--color-text-tertiary); font-style: italic; }
+.loader { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.app-tracker { display: flex; flex-direction: column; gap: 10px; margin-top: 0.5rem; }
+.app-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+.app-card .info { flex: 1; }
+.app-card .role { font-weight: 500; font-size: 14px; }
+.app-card .company { font-size: 13px; color: var(--color-text-secondary); }
+.badge { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 500; }
+.badge.applied { background: #E6F1FB; color: #0C447C; }
+.badge.interview { background: #EAF3DE; color: #27500A; }
+.badge.offer { background: #E1F5EE; color: #085041; }
+.badge.rejected { background: #FCEBEB; color: #791F1F; }
+.badge.saved { background: #F1EFE8; color: #444441; }
+.add-app-form { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.add-app-form h3 { font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+.empty-state { text-align: center; padding: 2rem; color: var(--color-text-tertiary); font-size: 14px; }
+.copy-btn { background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 5px 12px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); display: inline-flex; align-items: center; gap: 5px; }
+.copy-btn:hover { background: var(--color-background-secondary); }
+.section-title { font-size: 15px; font-weight: 500; margin-bottom: 1rem; color: var(--color-text-primary); }
+.platform-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.ptag { font-size: 12px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: 999px; padding: 4px 12px; color: var(--color-text-secondary); cursor: pointer; }
+.ptag.selected { background: var(--color-text-primary); color: var(--color-background-primary); border-color: var(--color-text-primary); }
+.tip { font-size: 12px; color: var(--color-text-tertiary); margin-top: 4px; }
+.delete-btn { background: none; border: none; color: var(--color-text-tertiary); cursor: pointer; font-size: 18px; padding: 2px 6px; border-radius: 4px; }
+.delete-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+.stat-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px; text-align: center; }
+.stat-card .num { font-size: 22px; font-weight: 500; }
+.stat-card .lbl { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.profile-filled-banner { background: #EAF3DE; border: 0.5px solid #C0DD97; border-radius: var(--border-radius-md); padding: 8px 14px; font-size: 13px; color: #27500A; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+</style>
+
+<h2 class="sr-only">AI Job Application Assistant for Sai Veerendra Vasu Katari</h2>
+
+<div class="app">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('profile')"><i class="ti ti-user" aria-hidden="true"></i> My Profile</button>
+    <button class="tab" onclick="switchTab('generator')"><i class="ti ti-wand" aria-hidden="true"></i> AI Generator</button>
+    <button class="tab" onclick="switchTab('tracker')"><i class="ti ti-clipboard-list" aria-hidden="true"></i> Tracker</button>
+  </div>
+
+  <!-- PROFILE TAB -->
+  <div id="panel-profile" class="panel active">
+    <div class="profile-filled-banner"><i class="ti ti-circle-check" aria-hidden="true"></i> Profile pre-filled from your resume — review and update as needed</div>
+    <div class="row2">
+      <div class="field"><label>Full name</label><input type="text" id="p-name" value="Sai Veerendra Vasu Katari" /></div>
+      <div class="field"><label>Current role / title</label><input type="text" id="p-role" value="Embedded Firmware Engineer" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Years of experience</label><input type="text" id="p-exp" value="~1.5 years (trainee + intern)" /></div>
+      <div class="field"><label>Location</label><input type="text" id="p-loc" value="Peddapuram, Andhra Pradesh, India" /></div>
+    </div>
+    <div class="field"><label>Key skills</label><input type="text" id="p-skills" value="Embedded C, C, C++, Python, UART, SPI, I2C, CAN (basics), PIC, 8051, ATmega328P, MPLAB IDE, Keil uVision, Proteus, PICSIMLAB, Git, RTOS basics, Interrupt handling, GPIO, Timers, ADC, Logic Analyzer" /></div>
+    <div class="field"><label>Education</label><input type="text" id="p-edu" value="B.Tech ECE, Aditya College of Engineering and Technology, JNTUK — GPA 7.60 (2021–2025)" /></div>
+    <div class="field"><label>Work experience summary</label><textarea id="p-work" style="min-height:120px;">• Embedded Systems Trainee @ RTech Software Solutions (Jan–Oct 2024): Developed UART, SPI, I2C modules in Embedded C; improved data transfer reliability by 30%; built interrupt-driven firmware for real-time sensor interfacing; debugged using logic analyzers.
+• Embedded Systems Intern @ Skill Dzire (Jun–Jul 2024): Sensor interfacing on 8051 using UART/SPI/I2C; real-time testing; firmware optimization.
+• Embedded Systems Intern + System Specialist @ Emertxe Information Technologies (Jan–Feb 2025): State-machine firmware for PIC MCUs; real-time Microwave Oven control system; SDLC + Git workflows; MPLAB/PICSIMLAB debugging; boosted execution efficiency by 20%.
+
+Key Projects:
+• Automated Smart Waste Segregation System (ATmega328P, ultrasonic sensors, I2C LCD, UART alerts)
+• Smart Micro-Oven Control System (timer/interrupt-based thermal regulation, GPIO overheat protection)
+• Password-Based Door Lock System (keypad auth, Embedded C, 16x2 LCD)</textarea></div>
+    <div class="field"><label>Job preferences</label><textarea id="p-prefs" style="min-height:60px;">Fresher/junior Embedded Firmware or Embedded Systems Engineer roles. Open to full-time positions across India (Hyderabad, Bangalore, Chennai, remote). Interested in IoT, automotive embedded, RTOS-based systems. Target CTC: open to market standard for fresher roles.</textarea></div>
+    <div class="field">
+      <label>Platforms I'm using</label>
+      <div class="platform-tags" id="platform-tags">
+        <span class="ptag selected" onclick="togglePlatform(this)">LinkedIn</span>
+        <span class="ptag selected" onclick="togglePlatform(this)">Naukri</span>
+        <span class="ptag selected" onclick="togglePlatform(this)">Internshala</span>
+        <span class="ptag" onclick="togglePlatform(this)">Indeed</span>
+        <span class="ptag" onclick="togglePlatform(this)">Wellfound</span>
+        <span class="ptag" onclick="togglePlatform(this)">Instahyre</span>
+        <span class="ptag" onclick="togglePlatform(this)">Shine</span>
+        <span class="ptag" onclick="togglePlatform(this)">Monster</span>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveProfile()"><i class="ti ti-check" aria-hidden="true"></i> Save profile</button>
+    <span id="save-msg" style="font-size:13px;color:var(--color-text-secondary);margin-left:10px;display:none;">Saved!</span>
+  </div>
+
+  <!-- GENERATOR TAB -->
+  <div id="panel-generator" class="panel">
+    <p class="section-title">Paste a job description — get tailored content instantly</p>
+    <div class="field">
+      <label>Job description (paste from LinkedIn, Naukri, Internshala, etc.)</label>
+      <textarea id="g-jd" placeholder="Paste the full job description here..." style="min-height:130px;"></textarea>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Company name</label><input type="text" id="g-company" placeholder="Texas Instruments, Bosch, etc." /></div>
+      <div class="field"><label>Role title</label><input type="text" id="g-jobtitle" placeholder="Embedded Firmware Engineer" /></div>
+    </div>
+    <div class="field">
+      <label>What to generate</label>
+      <select id="g-type">
+        <option value="both">Cover letter + Profile summary</option>
+        <option value="cover">Cover letter only</option>
+        <option value="summary">LinkedIn/Naukri headline + summary</option>
+        <option value="checklist">Application checklist + tips</option>
+        <option value="keywords">ATS keyword analysis + gap report</option>
+      </select>
+    </div>
+    <button class="btn-primary" id="gen-btn" onclick="generate()"><i class="ti ti-wand" aria-hidden="true"></i> Generate with AI</button>
+    <p class="tip" style="margin-top:6px;">Your resume data is already loaded — just paste the JD and go</p>
+
+    <div id="gen-output" class="output-box empty">Your AI-generated content will appear here...</div>
+    <div id="gen-actions" style="display:none; gap:8px; flex-wrap:wrap; margin-top:8px;">
+      <button class="copy-btn" onclick="copyOutput()"><i class="ti ti-copy" aria-hidden="true"></i> Copy</button>
+      <button class="copy-btn" onclick="saveToTracker()"><i class="ti ti-plus" aria-hidden="true"></i> Add to tracker</button>
+      <button class="copy-btn" onclick="regenerate()"><i class="ti ti-refresh" aria-hidden="true"></i> Regenerate</button>
+    </div>
+  </div>
+
+  <!-- TRACKER TAB -->
+  <div id="panel-tracker" class="panel">
+    <div class="stats-row">
+      <div class="stat-card"><div class="num" id="s-total">0</div><div class="lbl">Total</div></div>
+      <div class="stat-card"><div class="num" id="s-interview">0</div><div class="lbl">Interviews</div></div>
+      <div class="stat-card"><div class="num" id="s-offer">0</div><div class="lbl">Offers</div></div>
+      <div class="stat-card"><div class="num" id="s-applied">0</div><div class="lbl">Applied</div></div>
+    </div>
+    <div class="add-app-form">
+      <h3>Add application</h3>
+      <div class="row2">
+        <div class="field"><label>Company</label><input type="text" id="t-company" placeholder="Bosch, TI, Qualcomm..." /></div>
+        <div class="field"><label>Role</label><input type="text" id="t-role" placeholder="Embedded Firmware Engineer" /></div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Status</label>
+          <select id="t-status">
+            <option value="saved">Saved</option>
+            <option value="applied" selected>Applied</option>
+            <option value="interview">Interview</option>
+            <option value="offer">Offer</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="field"><label>Platform</label><input type="text" id="t-platform" placeholder="LinkedIn" /></div>
+      </div>
+      <button class="btn-primary" onclick="addApp()"><i class="ti ti-plus" aria-hidden="true"></i> Add</button>
+    </div>
+    <div class="app-tracker" id="app-list">
+      <div class="empty-state"><i class="ti ti-clipboard" style="font-size:24px;display:block;margin-bottom:8px;" aria-hidden="true"></i>No applications yet — add one above or use the AI Generator and click "Add to tracker".</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let profile = {};
+let applications = [];
+let lastGenerated = '';
+
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${t}')"]`).classList.add('active');
+  document.getElementById('panel-' + t).classList.add('active');
+}
+
+function togglePlatform(el) { el.classList.toggle('selected'); }
+
+function saveProfile() {
+  profile = {
+    name: document.getElementById('p-name').value,
+    role: document.getElementById('p-role').value,
+    exp: document.getElementById('p-exp').value,
+    location: document.getElementById('p-loc').value,
+    skills: document.getElementById('p-skills').value,
+    education: document.getElementById('p-edu').value,
+    work: document.getElementById('p-work').value,
+    prefs: document.getElementById('p-prefs').value,
+    platforms: [...document.querySelectorAll('.ptag.selected')].map(el => el.textContent).join(', ')
+  };
+  const msg = document.getElementById('save-msg');
+  msg.style.display = 'inline';
+  setTimeout(() => msg.style.display = 'none', 2000);
+}
+
+function getProfile() {
+  return {
+    name: document.getElementById('p-name').value,
+    role: document.getElementById('p-role').value,
+    exp: document.getElementById('p-exp').value,
+    location: document.getElementById('p-loc').value,
+    skills: document.getElementById('p-skills').value,
+    education: document.getElementById('p-edu').value,
+    work: document.getElementById('p-work').value,
+    prefs: document.getElementById('p-prefs').value
+  };
+}
+
+async function generate() {
+  const p = getProfile();
+  const jd = document.getElementById('g-jd').value.trim();
+  const company = document.getElementById('g-company').value.trim();
+  const jobTitle = document.getElementById('g-jobtitle').value.trim();
+  const genType = document.getElementById('g-type').value;
+
+  if (!jd) { alert('Please paste a job description first.'); return; }
+
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span> Generating...';
+
+  const outputEl = document.getElementById('gen-output');
+  outputEl.classList.remove('empty');
+  outputEl.textContent = 'Thinking...';
+  document.getElementById('gen-actions').style.display = 'none';
+
+  const profileText = `Name: ${p.name}
+Current role: ${p.role}
+Experience: ${p.exp}
+Location: ${p.location}
+Skills: ${p.skills}
+Education: ${p.education}
+Work history & projects:
+${p.work}
+Job preferences: ${p.prefs}`;
+
+  const instructions = {
+    both: 'Write a professional cover letter (under 280 words) AND a short LinkedIn/Naukri profile summary (3–4 sentences) tailored to this job. Separate them clearly with "--- PROFILE SUMMARY ---".',
+    cover: 'Write a professional, concise cover letter (under 280 words) tailored to this specific job and candidate. Sound human, not generic. Reference the company by name.',
+    summary: 'Write a compelling LinkedIn/Naukri headline (1 punchy line) and professional summary (4–5 sentences) highly tailored to this role. Label them clearly.',
+    checklist: 'Create a practical 8-step application checklist and 3 insider tips specific to this role and company in the embedded/firmware domain.',
+    keywords: 'Analyze the job description for ATS keywords. List: (1) keywords already present in the candidate profile, (2) missing keywords the candidate should add, (3) 3 quick profile improvements to increase match score.'
+  };
+
+  const prompt = `You are an expert career coach specializing in embedded systems and electronics engineering hiring.
+
+CANDIDATE PROFILE:
+${profileText}
+
+JOB: ${jobTitle || 'Embedded Engineer'} at ${company || 'the company'}
+JOB DESCRIPTION:
+${jd}
+
+TASK: ${instructions[genType]}
+
+Be specific. Use details from both the profile and job description. Sound natural and tailored, not template-like.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await resp.json();
+    const text = data.content?.map(b => b.text || '').join('') || 'Something went wrong. Please try again.';
+    lastGenerated = text;
+    outputEl.textContent = text;
+    document.getElementById('gen-actions').style.display = 'flex';
+  } catch(e) {
+    outputEl.textContent = 'Error reaching AI. Please try again.';
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-wand" aria-hidden="true"></i> Generate with AI';
+}
+
+function regenerate() { generate(); }
+
+function copyOutput() {
+  navigator.clipboard.writeText(lastGenerated).then(() => {
+    const btn = event.target.closest('button');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="ti ti-check"></i> Copied!';
+    setTimeout(() => btn.innerHTML = orig, 1500);
+  });
+}
+
+function saveToTracker() {
+  const company = document.getElementById('g-company').value || 'Unknown company';
+  const role = document.getElementById('g-jobtitle').value || 'Embedded Engineer';
+  applications.unshift({ company, role, status: 'applied', platform: 'Manual', id: Date.now() });
+  renderApps();
+  switchTab('tracker');
+}
+
+function addApp() {
+  const company = document.getElementById('t-company').value.trim();
+  const role = document.getElementById('t-role').value.trim();
+  if (!company || !role) { alert('Please enter company and role.'); return; }
+  applications.unshift({
+    company, role,
+    status: document.getElementById('t-status').value,
+    platform: document.getElementById('t-platform').value || '—',
+    id: Date.now()
+  });
+  document.getElementById('t-company').value = '';
+  document.getElementById('t-role').value = '';
+  renderApps();
+}
+
+function deleteApp(id) {
+  applications = applications.filter(a => a.id !== id);
+  renderApps();
+}
+
+function changeStatus(id, val) {
+  const app = applications.find(a => a.id === id);
+  if (app) { app.status = val; renderApps(); }
+}
+
+function renderApps() {
+  const list = document.getElementById('app-list');
+  if (!applications.length) {
+    list.innerHTML = '<div class="empty-state"><i class="ti ti-clipboard" style="font-size:24px;display:block;margin-bottom:8px;" aria-hidden="true"></i>No applications yet.</div>';
+    updateStats(); return;
+  }
+  list.innerHTML = applications.map(a => `
+    <div class="app-card">
+      <div class="info">
+        <div class="role">${a.role}</div>
+        <div class="company">${a.company} · <span style="color:var(--color-text-tertiary);font-size:12px;">${a.platform}</span></div>
+      </div>
+      <select onchange="changeStatus(${a.id}, this.value)" style="font-size:12px;padding:4px 8px;width:auto;">
+        <option value="saved" ${a.status==='saved'?'selected':''}>Saved</option>
+        <option value="applied" ${a.status==='applied'?'selected':''}>Applied</option>
+        <option value="interview" ${a.status==='interview'?'selected':''}>Interview</option>
+        <option value="offer" ${a.status==='offer'?'selected':''}>Offer</option>
+        <option value="rejected" ${a.status==='rejected'?'selected':''}>Rejected</option>
+      </select>
+      <span class="badge ${a.status}">${a.status}</span>
+      <button class="delete-btn" onclick="deleteApp(${a.id})" aria-label="Delete">×</button>
+    </div>
+  `).join('');
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('s-total').textContent = applications.length;
+  document.getElementById('s-interview').textContent = applications.filter(a => a.status === 'interview').length;
+  document.getElementById('s-offer').textContent = applications.filter(a => a.status === 'offer').length;
+  document.getElementById('s-applied').textContent = applications.filter(a => a.status === 'applied').length;
+}
+</script>
